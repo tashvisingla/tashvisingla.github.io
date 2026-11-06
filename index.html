@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tashvi Singla — Portfolio</title>
+  <meta name="description" content="Tashvi Singla, mechanical engineering student at Columbia University. Projects in propulsion, robotics, drones, and battery systems." />
+  <meta name="theme-color" content="#f6f0e6" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <header class="nav">
+    <a class="nav__home" href="#top">T<span>S</span></a>
+    <nav>
+      <a href="#about">About</a>
+      <a href="#experience">Experience</a>
+      <a href="#projects">Projects</a>
+      <a href="#skills">Skills</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="hero__text">
+        <p class="eyebrow">Mechanical + Aerospace Engineering · Columbia</p>
+        <h1>Hello, I'm <em id="hero-name">Tashvi Singla</em></h1>
+        <p class="hero__tag" id="hero-tag"></p>
+        <div class="hero__cta">
+          <a class="btn btn--solid" href="#projects">View projects</a>
+          <a class="btn" href="#contact">Let's connect</a>
+        </div>
+      </div>
+      <aside class="titleblock" id="titleblock" aria-label="Summary"></aside>
+    </section>
+
+    <section id="about" class="section">
+      <h2 class="section__h"><span>01</span>About</h2>
+      <div class="about">
+        <p id="about-text"></p>
+        <div class="about__edu" id="about-edu"></div>
+      </div>
+    </section>
+
+    <section id="experience" class="section">
+      <h2 class="section__h"><span>02</span>Experience</h2>
+      <ol class="timeline" id="timeline"></ol>
+    </section>
+
+    <section id="projects" class="section">
+      <h2 class="section__h"><span>03</span>Projects</h2>
+      <div class="filters" id="filters" role="tablist"></div>
+      <div class="grid" id="project-grid"></div>
+    </section>
+
+    <section id="skills" class="section">
+      <h2 class="section__h"><span>04</span>Skills &amp; Coursework</h2>
+      <div class="skills" id="skills-list"></div>
+    </section>
+
+    <section id="contact" class="section contact">
+      <h2 class="section__h"><span>05</span>Contact</h2>
+      <p class="contact__lead">Open to engineering internships and research in propulsion, aerospace structures, and robotics.</p>
+      <div class="contact__links" id="contact-links"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>© <span id="year"></span> Tashvi Singla</span>
+    <span class="mono">DWG. NO. TS-001 · REV A</span>
+  </footer>
+
+  <!-- Project detail: one shared 3D viewer, opened via #project-<id> -->
+  <div class="detail" id="detail" hidden>
+    <div class="detail__scrim" data-close></div>
+    <article class="detail__panel" role="dialog" aria-modal="true" aria-labelledby="d-title">
+      <button class="detail__close" data-close aria-label="Close">✕</button>
+      <div class="viewer">
+        <div class="viewer__canvas" id="viewer-canvas"></div>
+        <div class="viewer__status" id="viewer-status">Loading model…</div>
+        <div class="viewer__bar">
+          <div class="seg" id="mode-seg">
+            <button data-mode="shaded" class="on">Shaded</button>
+            <button data-mode="edges">Edges</button>
+            <button data-mode="xray">X-ray</button>
+          </div>
+          <label class="explode" id="explode-wrap">Explode
+            <input type="range" id="explode" min="0" max="1" step="0.01" value="0" />
+          </label>
+          <button id="rotate-btn" title="Auto-rotate">⟳</button>
+          <button id="reset-btn" title="Reset view">⌂</button>
+        </div>
+        <span class="viewer__hint mono">drag · scroll · right-drag to pan</span>
+      </div>
+      <div class="detail__body">
+        <p class="eyebrow" id="d-kind"></p>
+        <h3 id="d-title"></h3>
+        <p class="detail__sub" id="d-sub"></p>
+        <p id="d-summary"></p>
+        <table class="specs" id="d-specs"></table>
+        <div class="tags" id="d-tags"></div>
+        <p class="detail__note mono" id="d-note"></p>
+        <div class="detail__nav">
+          <a id="d-prev" href="#">← Prev</a>
+          <a id="d-next" href="#">Next →</a>
+        </div>
+      </div>
+    </article>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
