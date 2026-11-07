@@ -129,7 +129,7 @@ export const projects = [
     kind: "Personal",
     icon: "drone",
     model: "drone-platform",
-    tags: ["UAV", "Propulsion", "Power systems"],
+    tags: ["UAV", "Propulsion", "Power systems", "Camera mount"],
     summary:
       "Propulsion layout, airframe structure, and power system integration for extended-endurance autonomous flight, sized around onboard sensor and compute payloads.",
     specs: [["Goal", "Extended endurance"], ["Payload", "Sensors + compute"]],
@@ -153,10 +153,15 @@ export const projects = [
     kind: "Internship",
     icon: "battery",
     model: "li-s-battery",
-    tags: ["Battery packs", "Thermal", "Flight test"],
+    tags: ["6S2P", "Pouch cells", "Busbars", "BMS", "Drones"],
     summary:
-      "Custom lithium-sulfur pack with double the Wh/kg at equivalent weight. Designed mounting, wiring, and connector integration for the electronics assembly around thermal and safety limits.",
-    specs: [["Energy density", "+100% Wh/kg"], ["Validation", "Qualification + flight"]],
+      "A 6S2P lithium-sulfur pouch pack for a drone, built for low mass and easy assembly, with double the Wh/kg at equivalent weight. The first version was a fully 3D-printed enclosure. It held the cells well, but the shell was too heavy for the cells it carried, so I replaced it with foam interlayers, compression end plates, and a heat-shrink wrap. Li-S cells need steady stack pressure, so the plates and corner stops keep the foam at a controlled compression.",
+    details: [
+      ["Parallel first, then series", "Each pair of cells is joined in parallel and checked before the six pairs are chained in series. Balancing happens at every pair, a weak cell has less effect, and a bad pair gets caught early instead of inside a finished string."],
+      ["Connections", "Negative tabs are bridged with a nickel strip and positive tabs with an aluminum busbar, each leaving a stub so the series jumper is its own insulated step. Testing showed thin nickel couldn't carry the full current, which pushed the series links toward nickel-plated copper."],
+      ["Integration", "Balance leads to a 6S active-balancing BMS, XT60 main power, Kapton insulation at every joint, and a thermistor inside the stack."],
+    ],
+    specs: [["Configuration", "6S2P, 12 pouch cells"], ["Energy density", "+100% Wh/kg"], ["Retention", "Foam + end plates + heat shrink"], ["Validation", "Qualification + flight"]],
   },
   {
     id: "ereg-gearbox",
@@ -212,7 +217,7 @@ export const projects = [
     kind: "Team",
     icon: "drone",
     model: "quadcopter",
-    tags: ["Onshape", "3D printing", "Mechanisms"],
+    tags: ["Onshape", "3D printing", "Mechanisms", "Camera mount"],
     summary:
       "Frame, arms, propellers, and a snake-style payload mechanism designed in Onshape. Printed a prototype arm and propellers to check fit and stiffness before the full build.",
     specs: [["CAD", "Onshape"], ["Prototype", "Printed arm + props"]],

@@ -51,6 +51,8 @@ export function createViewer(container) {
         e.raycast = () => {};
         o.add(e); o.userData.edges = e;
         o.userData.baseMat = o.material;
+        o.material.userData.wasTransparent = o.material.transparent;
+        o.material.userData.baseOpacity = o.material.opacity;
       }
     });
   }
@@ -124,6 +126,21 @@ export function createViewer(container) {
       let any = false;
       root?.traverse((o) => { if (o.userData.explode?.lengthSq() > 0) any = true; });
       return any;
+    },
+    partNames() {
+      const g = root?.children[0];
+      return g ? g.children.filter((c) => c.userData.basePos).map((c) => c.name) : [];
+    },
+    highlight(name) {
+      const g = root?.children[0]; if (!g) return;
+      g.children.forEach((c) => c.traverse((o) => {
+        if (!o.isMesh) return;
+        const on = name && c.name === name, dim = name && !on;
+        const mat = o.material;
+        if (mat.emissive) mat.emissive.setHex(on ? 0x2346a0 : 0x000000);
+        if (mat.emissiveIntensity !== undefined) mat.emissiveIntensity = on ? 0.6 : 0;
+        if (mode !== "xray") { mat.transparent = dim || mat.userData?.wasTransparent || false; mat.opacity = dim ? 0.18 : (mat.userData?.baseOpacity ?? 1); }
+      }));
     },
     setMode(m) { mode = m; applyMode(); },
     setExplode(t) { explode = t; applyExplode(); },

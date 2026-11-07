@@ -99,6 +99,8 @@ async function openProject(id) {
   $("#d-title").textContent = p.title;
   $("#d-sub").textContent = p.subtitle;
   $("#d-summary").textContent = p.summary;
+  $("#d-details").innerHTML = (p.details || []).map(([h, t]) => `<h4>${esc(h)}</h4><p>${esc(t)}</p>`).join("");
+  $("#d-parts-wrap").hidden = true;
   $("#d-specs").innerHTML = p.specs.map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join("");
   $("#d-tags").innerHTML = p.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join("");
   $("#d-prev").href = `#project-${projects[(i - 1 + projects.length) % projects.length].id}`;
@@ -112,7 +114,12 @@ async function openProject(id) {
     const out = await v.show(p.model);
     if (byId[location.hash.replace("#project-", "")] !== p) return; // navigated away mid-load
     status.hidden = true;
-    $("#d-note").textContent = out.placeholder ? "◇ Placeholder geometry. Project CAD coming soon." : (out.notes || "");
+    $("#d-note").textContent = out.placeholder
+      ? "◇ Placeholder geometry. Project CAD coming soon."
+      : "◇ Illustrative CAD built for this site. " + (out.notes || "");
+    const names = v.partNames();
+    $("#d-parts").innerHTML = names.map((n) => `<li data-part="${esc(n)}">${esc(n)}</li>`).join("");
+    $("#d-parts-wrap").hidden = !names.length;
     $("#explode").value = 0;
     $("#explode-wrap").hidden = !v.hasExplode();
     setMode(currentMode);
@@ -136,6 +143,8 @@ function setMode(m) {
   viewer?.setMode(m);
 }
 $("#mode-seg").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) setMode(b.dataset.mode); });
+$("#d-parts").addEventListener("mouseover", (e) => { const li = e.target.closest("li"); if (li) viewer?.highlight(li.dataset.part); });
+$("#d-parts").addEventListener("mouseleave", () => viewer?.highlight(null));
 $("#explode").addEventListener("input", (e) => viewer?.setExplode(+e.target.value));
 $("#reset-btn").addEventListener("click", () => viewer?.reset());
 $("#rotate-btn").addEventListener("click", () => {

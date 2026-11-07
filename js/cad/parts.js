@@ -76,6 +76,7 @@ export function extrudeProfile(points, depth, material = MAT.aluminum()) {
 /** Revolve a profile [[r,y],...] around Y (nose cones, bodies of revolution). */
 export function revolve(points, material = MAT.aluminum(), segments = 64) {
   const geo = new THREE.LatheGeometry(points.map(([r, y]) => new THREE.Vector2(r, y)), segments);
+  material.side = THREE.DoubleSide;
   return new THREE.Mesh(geo, material);
 }
 
@@ -112,4 +113,101 @@ export function roundedRect(w, h, r) {
   s.lineTo(x + r, y + h); s.quadraticCurveTo(x, y + h, x, y + h - r);
   s.lineTo(x, y + r); s.quadraticCurveTo(x, y, x + r, y);
   return s;
+}
+
+/* ---------- More primitives (Y-up unless noted) ---------- */
+
+/** Cylinder along Y, centered. r2 = top radius (cone/frustum). */
+export function cyl({ r = 5, r2, h = 10, seg = 40, material = MAT.aluminum() } = {}) {
+  return new THREE.Mesh(new THREE.CylinderGeometry(r2 ?? r, r, h, seg), material);
+}
+export function sphere({ r = 5, material = MAT.steel() } = {}) {
+  return new THREE.Mesh(new THREE.SphereGeometry(r, 32, 16), material);
+}
+/** Torus in XY plane (axis Z). */
+export function torus({ R = 10, r = 1.5, arc = Math.PI * 2, material = MAT.steel() } = {}) {
+  return new THREE.Mesh(new THREE.TorusGeometry(R, r, 16, 48, arc), material);
+}
+/** Round tube following a polyline/curve of [x,y,z] points (wires, tendons, bent rods). */
+export function sweep(points, r = 1, material = MAT.steel(), closed = false) {
+  const curve = new THREE.CatmullRomCurve3(points.map((p) => new THREE.Vector3(...p)), closed, "centripetal");
+  return new THREE.Mesh(new THREE.TubeGeometry(curve, Math.max(24, points.length * 12), r, 12, closed), material);
+}
+/** Group sub-parts that move together. items: [{ mesh, pos, rot (deg) }] */
+export function group(items) {
+  const g = new THREE.Group();
+  for (const { mesh, pos, rot, name } of items) {
+    if (pos) mesh.position.set(...pos);
+    if (rot) mesh.rotation.set(...rot.map(THREE.MathUtils.degToRad));
+    if (name) mesh.name = name;
+    g.add(mesh);
+  }
+  return g;
+}
+
+/**
+ * Loft through superellipse cross-sections stacked along Z.
+ * sections: [{ z, w, h, y = 0, n = 2.5 }]  (w,h full width/height; n: 2=ellipse, higher=boxier)
+ * Open shell unless capEnd. Good for nose cones, fairings, fuselages.
+ */
+export function loft(sections, material = MAT.carbon(), { seg = 48, capEnd = true } = {}) {
+  const pos = [], idx = [];
+  sections.forEach(({ z, w, h, y = 0, n = 2.5 }) => {
+    for (let i = 0; i < seg; i++) {
+      const t = (i / seg) * Math.PI * 2, c = Math.cos(t), s = Math.sin(t);
+      const x = (w / 2) * Math.sign(c) * Math.pow(Math.abs(c), 2 / n);
+      const yy = y + (h / 2) * Math.sign(s) * Math.pow(Math.abs(s), 2 / n);
+      pos.push(x, yy, z);
+    }
+  });
+  for (let k = 0; k < sections.length - 1; k++)
+    for (let i = 0; i < seg; i++) {
+      const a = k * seg + i, b = k * seg + ((i + 1) % seg), c = a + seg, d = b + seg;
+      idx.push(a, c, b, b, c, d);
+    }
+  if (capEnd) {
+    const last = sections[sections.length - 1], base = (sections.length - 1) * seg;
+    const ci = pos.length / 3; pos.push(0, last.y ?? 0, last.z);
+    for (let i = 0; i < seg; i++) idx.push(base + i, base + ((i + 1) % seg), ci);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  geo.setIndex(idx); geo.computeVertexNormals();
+  const m = material.clone(); m.side = THREE.DoubleSide;
+  return new THREE.Mesh(geo, m);
+}
+
+/** Brushless outrunner motor, axis Y, base at y=0. */
+export function motor({ d = 28, h = 22, material = MAT.carbon() } = {}) {
+  return group([
+    { mesh: cyl({ r: d / 2, h: h * 0.75, material }), pos: [0, h * 0.375, 0] },
+    { mesh: cyl({ r: d / 2 - 1, h: h * 0.25, material: MAT.aluminum() }), pos: [0, h * 0.875, 0] },
+    { mesh: cyl({ r: 2.5, h: 10, material: MAT.steel() }), pos: [0, h + 5, 0] },
+  ]);
+}
+
+/** Two-blade propeller in XZ plane, hub at origin. */
+export function propeller({ dia = 254, chord = 22, material = MAT.pla(0x2b2f36) } = {}) {
+  const r = dia / 2, blade = [];
+  for (let i = 0; i <= 10; i++) {
+    const t = i / 10, x = 8 + t * (r - 8);
+    blade.push([x, chord * (0.55 - 0.35 * t) * (t < 0.15 ? 0.6 + t * 2.6 : 1)]);
+  }
+  const pts = [...blade.map(([x, c]) => [x, c / 2]), ...[...blade].reverse().map(([x, c]) => [x, -c / 2])];
+  const mk = (yaw) => {
+    const b = extrudeProfile(pts, 2, material);
+    b.rotation.set(Math.PI / 2 + 0.2, 0, 0); // lay flat in XZ with a little pitch
+    const holder = new THREE.Group(); holder.add(b); holder.rotation.y = yaw; return holder;
+  };
+  return group([{ mesh: cyl({ r: 7, h: 7, material }) }, { mesh: mk(0) }, { mesh: mk(Math.PI) }]);
+}
+
+/** Spherical rod end (heim joint), shank along -Y from the eye at origin. Eye axis = Z. */
+export function rodEnd({ eye = 9, shank = 22, d = 8, material = MAT.steel() } = {}) {
+  return group([
+    { mesh: torus({ R: eye * 0.72, r: eye * 0.3, material }) },
+    { mesh: sphere({ r: eye * 0.48, material: MAT.aluminum() }) },
+    { mesh: cyl({ r: d / 2, h: shank, material }), pos: [0, -eye - shank / 2 + 2, 0] },
+    { mesh: cyl({ r: d * 0.85, h: 4, seg: 6, material }), pos: [0, -eye - shank + 8, 0] },
+  ]);
 }

@@ -12,7 +12,16 @@
 import { assembly, gear, shaft, plate, MAT } from "../cad/parts.js";
 
 export const MODELS = {
-  // "gear-train": () => import("./gear-train.js"),
+  "model-rocket": () => import("./model-rocket.js"),
+  "drone-platform": () => import("./drone-platform.js"),
+  "gear-train": () => import("./gear-train.js"),
+  "li-s-battery": () => import("./li-s-battery.js"),
+  "ereg-gearbox": () => import("./ereg-gearbox.js"),
+  "roboglove": () => import("./roboglove.js"),
+  "fsae-suspension": () => import("./fsae-suspension.js"),
+  "fsae-nosecone": () => import("./fsae-nosecone.js"),
+  "quadcopter": () => import("./quadcopter.js"),
+  "frc-robot": () => import("./frc-robot.js"),
 };
 
 export function placeholder() {

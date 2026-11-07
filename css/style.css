@@ -178,3 +178,10 @@ main, .footer { max-width: var(--max); margin: 0 auto; padding: 0 24px; }
 }
 @media (max-width: 520px) { .nav nav a:nth-child(n+4) { display: none; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; scroll-behavior: auto !important; } }
+
+.details h4 { font: 600 16px var(--serif); margin: 18px 0 4px; }
+.details p { margin: 0; color: var(--ink-2); font-size: 15px; }
+.parts { margin-top: 18px; }
+.parts ul { list-style: none; margin: 0; padding: 0; columns: 2; column-gap: 16px; font: 400 12px/1.5 var(--mono); }
+.parts li { padding: 3px 6px; cursor: default; break-inside: avoid; border-left: 2px solid transparent; }
+.parts li:hover { border-left-color: var(--blue); background: var(--blue-soft); color: var(--blue); }
