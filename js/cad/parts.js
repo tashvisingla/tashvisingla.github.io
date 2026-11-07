@@ -1,18 +1,42 @@
 // Parametric part helpers. All dimensions in millimetres; the viewer auto-fits scale.
 // Each helper returns a THREE.Mesh. Group meshes into an assembly with `assembly()`.
 import * as THREE from "three";
+import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+
+// Engineering palette: model files ask for "orange/blue/cream" etc; this maps them to
+// realistic CAD-render colors (anodized, printed PETG/nylon, G10, PCB) so every model reads like a STEP render.
+const REMAP = {
+  0xe0663a: 0x8c3b2f, // orange → brick red (printed / anodized accent)
+  0x2346a0: 0x41546e, // blue → slate anodize
+  0xf3efe6: 0xcfd0cc, // cream → light gray printed nylon
+  0xeae4d6: 0xd6d6d2,
+  0x5b6475: 0x5c6168,
+  0x9a7b55: 0x7d6a52,
+  0xc4552d: 0x8c3b2f,
+  0xb3261e: 0x9b2a22,
+  0x1f6b3a: 0x2f5a3e,
+  0xe6c229: 0xc9a43a,
+  0xb8c48a: 0xa9b07a,
+  0xd9b26a: 0xc3a77a,
+  0xb8955a: 0xa88f68,
+  0x2b2f36: 0x2a2d32,
+  0x3a3f47: 0x3b3f45,
+};
+const std = (color, metalness, roughness, extra = {}) =>
+  new THREE.MeshStandardMaterial({ color, metalness, roughness, envMapIntensity: 0.9, ...extra });
 
 export const MAT = {
-  aluminum: () => new THREE.MeshStandardMaterial({ color: 0xb9c0c8, metalness: 0.75, roughness: 0.35 }),
-  steel: () => new THREE.MeshStandardMaterial({ color: 0x8a919a, metalness: 0.85, roughness: 0.3 }),
-  pla: (color = 0xe0663a) => new THREE.MeshStandardMaterial({ color, metalness: 0.05, roughness: 0.6 }),
-  carbon: () => new THREE.MeshStandardMaterial({ color: 0x24272c, metalness: 0.3, roughness: 0.45 }),
-  balsa: () => new THREE.MeshStandardMaterial({ color: 0xd9bf8f, metalness: 0, roughness: 0.85 }),
-  accent: () => new THREE.MeshStandardMaterial({ color: 0x2346a0, metalness: 0.2, roughness: 0.5 }),
+  aluminum: () => std(0xc4c9cf, 0.85, 0.32),
+  steel: () => std(0x8f959c, 0.9, 0.28),
+  pla: (color = 0xe0663a) => std(REMAP[color] ?? color, 0.02, 0.62),
+  carbon: () => std(0x26282c, 0.25, 0.42),
+  balsa: () => std(0xcfb48a, 0, 0.85),
+  accent: () => std(0x41546e, 0.55, 0.38),
+  rubber: () => std(0x1d1e20, 0, 0.9),
 };
 
-const extrudeSettings = (depth, bevel = 0) => ({
-  depth, bevelEnabled: bevel > 0, bevelSize: bevel, bevelThickness: bevel, bevelSegments: 2, curveSegments: 48,
+const extrudeSettings = (depth, bevel = 0.4) => ({
+  depth: Math.max(0.01, depth - 2 * bevel), bevelEnabled: bevel > 0 && depth > 2, bevelSize: bevel, bevelThickness: bevel, bevelSegments: 2, curveSegments: 48,
 });
 
 /** Spur gear. module m, tooth count z, face width w, bore diameter. Centered on origin, axis = Z. */
@@ -80,8 +104,11 @@ export function revolve(points, material = MAT.aluminum(), segments = 64) {
   return new THREE.Mesh(geo, material);
 }
 
-export function box({ x = 10, y = 10, z = 10, material = MAT.aluminum() } = {}) {
-  return new THREE.Mesh(new THREE.BoxGeometry(x, y, z), material);
+/** Box with a small edge fillet (like a real machined/printed part). r = fillet radius. */
+export function box({ x = 10, y = 10, z = 10, r, material = MAT.aluminum() } = {}) {
+  const rr = r ?? Math.min(1.2, Math.min(x, y, z) * 0.18);
+  const geo = rr > 0.05 ? new RoundedBoxGeometry(x, y, z, 2, rr) : new THREE.BoxGeometry(x, y, z);
+  return new THREE.Mesh(geo, material);
 }
 
 /**

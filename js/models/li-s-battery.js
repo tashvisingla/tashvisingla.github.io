@@ -1,129 +1,73 @@
-// 6S2P lithium-sulfur pouch pack (illustrative dimensions, not Zeta production geometry).
-// Six parallel pairs stacked, foam interlayers, Al compression plates with corner bolts + G10 stops,
-// Ni strip (−) and Al busbar (+) parallel bridges, Ni-Cu series jumpers, BMS + leads on top.
+// Li-S pack, final retention concept (follows Tashvi's CAD): 12 pouch cells (6S2P) stacked with
+// compression pads between them, carbon fiber sheets top and bottom, end clamps (one with tab slots),
+// shrink wrap.
 import * as THREE from "three";
-import { assembly, group, box, cyl, sweep, MAT } from "../cad/parts.js";
+import { assembly, group, box, MAT } from "../cad/parts.js";
 
-const CELL = { w: 60, l: 92, t: 7 }, GAP = 4, FOAM = 2, TAB = { w: 17, l: 26, t: 0.6 };
-const PITCH = CELL.t + FOAM;
-const pouch = () => new THREE.MeshStandardMaterial({ color: 0xc9ccd3, metalness: 0.55, roughness: 0.32 });
-const foamMat = () => new THREE.MeshStandardMaterial({ color: 0x3d4148, roughness: 0.95 });
-const nickel = () => new THREE.MeshStandardMaterial({ color: 0xd8d4c8, metalness: 0.8, roughness: 0.3 });
-const nicu = () => new THREE.MeshStandardMaterial({ color: 0xc98a5a, metalness: 0.8, roughness: 0.3 });
-const kapton = () => new THREE.MeshStandardMaterial({ color: 0xe0a030, roughness: 0.5, transparent: true, opacity: 0.85 });
+const N = 12;                          // cells (6 parallel pairs in series)
+const CELL = { x: 100, z: 76, t: 5.6 };
+const PAD = 1.6, SHEET = 2, CLAMP = 16;
+const TAB = { w: 17, l: 22, t: 0.5, z: 19 };
 
-const xA = -(CELL.w + GAP) / 2, xB = (CELL.w + GAP) / 2; // cell centers
-const zTab = CELL.l / 2;                                   // tab root
+const pouch = () => new THREE.MeshStandardMaterial({ color: 0x8e8f8c, metalness: 0.45, roughness: 0.45 });
+const pad = () => new THREE.MeshStandardMaterial({ color: 0x9c2b22, roughness: 0.85 });
+const cf = () => new THREE.MeshStandardMaterial({ color: 0x2b2d31, metalness: 0.3, roughness: 0.38 });
+const nickel = () => new THREE.MeshStandardMaterial({ color: 0xc9b89a, metalness: 0.75, roughness: 0.35 });
+const alum = () => new THREE.MeshStandardMaterial({ color: 0xd0d3d6, metalness: 0.85, roughness: 0.3 });
 
-/** One parallel group: two cells, (−) tabs adjacent at center, (+) tabs outboard. side = +1/−1 for + stub. */
-function parallelGroup(k, side) {
-  const items = [];
-  for (const [xc, mirror] of [[xA, 1], [xB, -1]]) {
-    items.push({ mesh: box({ x: CELL.w, y: CELL.t, z: CELL.l, material: pouch() }), pos: [xc, 0, 0] });
-    // sealed edge flange around the pouch
-    items.push({ mesh: box({ x: CELL.w + 4, y: 0.8, z: CELL.l + 4, material: pouch() }), pos: [xc, 0, 0] });
-    const neg = xc + mirror * 15, pos = xc - mirror * 15;
-    items.push({ mesh: box({ x: TAB.w, y: TAB.t, z: TAB.l, material: nickel() }), pos: [neg, 0, zTab + TAB.l / 2] });
-    items.push({ mesh: box({ x: TAB.w, y: TAB.t, z: TAB.l, material: MAT.aluminum() }), pos: [pos, 0, zTab + TAB.l / 2] });
-  }
-  // (−) bridge: Ni strip across the two adjacent negative tabs, stub toward −side
-  const negSpan = 2 * Math.abs(xA + 15) + TAB.w;
-  items.push({ mesh: box({ x: negSpan, y: 0.8, z: 10, material: nickel() }), pos: [0, 0.7, zTab + 14] });
-  items.push({ mesh: box({ x: 66, y: 0.8, z: 8, material: nickel() }), pos: [-side * 33, 0.7, zTab + 22] });
-  items.push({ mesh: box({ x: negSpan + 2, y: 0.3, z: 12, material: kapton() }), pos: [0, 1.3, zTab + 14] });
-  // (+) bridge: Al busbar arching over, joining outboard positive tabs, stub toward +side
-  const px = Math.abs(xA - 15);
-  items.push({ mesh: box({ x: 2 * px + 10, y: 2, z: 8, material: MAT.aluminum() }), pos: [0, 3.2, zTab + TAB.l - 3] });
-  for (const sx of [-1, 1]) items.push({ mesh: box({ x: 8, y: 3, z: 8, material: MAT.aluminum() }), pos: [sx * px, 1.5, zTab + TAB.l - 3] });
-  items.push({ mesh: box({ x: 12, y: 2, z: 8, material: MAT.aluminum() }), pos: [side * (px + 10), 3.2, zTab + TAB.l - 3] });
-  // foam interlayer above this group
-  items.push({ mesh: box({ x: 2 * CELL.w + GAP, y: FOAM, z: CELL.l, material: foamMat() }), pos: [0, CELL.t / 2 + FOAM / 2, 0] });
-  return group(items);
+function cell() {
+  return group([
+    { mesh: box({ x: CELL.x, y: CELL.t, z: CELL.z, r: 1.2, material: pouch() }) },
+    { mesh: box({ x: CELL.x + 3, y: 0.6, z: CELL.z + 3, r: 0.2, material: pouch() }) }, // seal flange
+    { mesh: box({ x: TAB.l, y: TAB.t, z: TAB.w, r: 0.1, material: nickel() }), pos: [CELL.x / 2 + TAB.l / 2, 0, -TAB.z] },
+    { mesh: box({ x: TAB.l, y: TAB.t, z: TAB.w, r: 0.1, material: alum() }), pos: [CELL.x / 2 + TAB.l / 2, 0, TAB.z] },
+  ]);
+}
+
+/** End clamp: U-shaped carbon block hugging the stack end; `slots` cuts tab openings. */
+function clamp(H, slots, side) {
+  const D = CELL.z + 10;
+  const s = new THREE.Shape();
+  s.moveTo(-D / 2, -H / 2); s.lineTo(D / 2, -H / 2); s.lineTo(D / 2, H / 2); s.lineTo(-D / 2, H / 2);
+  if (slots) slots.forEach((y) => [-TAB.z, TAB.z].forEach((z) => {
+    const p = new THREE.Path(), w = TAB.w + 3, h = 3;
+    p.moveTo(z - w / 2, y - h / 2); p.lineTo(z + w / 2, y - h / 2); p.lineTo(z + w / 2, y + h / 2); p.lineTo(z - w / 2, y + h / 2);
+    s.holes.push(p);
+  }));
+  const g = new THREE.ExtrudeGeometry(s, { depth: 6, bevelEnabled: true, bevelSize: 0.6, bevelThickness: 0.6, bevelSegments: 2 });
+  g.rotateY(side > 0 ? -Math.PI / 2 : Math.PI / 2);
+  const face = new THREE.Mesh(g, cf());
+  const lip = (y) => ({ mesh: box({ x: CLAMP, y: 4, z: D, r: 0.8, material: cf() }), pos: [-side * CLAMP / 2, y, 0] });
+  return group([{ mesh: face }, lip(H / 2 - 2), lip(-H / 2 + 2)]);
 }
 
 export default function build() {
-  const parts = [];
-  const H = 6 * PITCH;
-  const y0 = 3 + FOAM + CELL.t / 2; // above bottom plate + base pad
-  const W = 2 * CELL.w + GAP + 26, D = CELL.l + 14;
-
-  parts.push({ name: "Bottom Al plate (3 mm 6061)", mesh: plateWithHoles(W, D), pos: [0, 1.5, 0], explode: [0, -40, 0] });
-  parts.push({ name: "Base EVA pad", mesh: box({ x: 2 * CELL.w + GAP, y: FOAM, z: CELL.l, material: foamMat() }), pos: [0, 3 + FOAM / 2, 0], explode: [0, -25, 0] });
-
-  for (let k = 0; k < 6; k++) {
-    const side = k % 2 ? -1 : 1;
-    parts.push({ name: `Parallel group ${k + 1} (2 cells)`, mesh: parallelGroup(k, side), pos: [0, y0 + k * PITCH, 0], explode: [0, (k - 2.5) * 16, 0] });
+  const pitch = CELL.t + PAD;
+  const stackH = N * pitch + PAD;
+  const H = stackH + 2 * SHEET;
+  const y0 = SHEET + PAD + CELL.t / 2;
+  const parts = [
+    { name: "Bottom carbon fiber sheet", mesh: box({ x: CELL.x + 6, y: SHEET, z: CELL.z + 6, r: 0.6, material: cf() }), pos: [0, SHEET / 2, 0], explode: [0, -40, 0] },
+  ];
+  for (let i = 0; i < N; i++) {
+    const pair = Math.floor(i / 2) + 1;
+    parts.push({ name: `Compression pad ${i + 1}`, mesh: box({ x: CELL.x - 2, y: PAD, z: CELL.z - 2, r: 0.3, material: pad() }), pos: [0, y0 - CELL.t / 2 - PAD / 2, 0], explode: [0, (i - N / 2) * 7 - 3, 0] });
+    parts.push({ name: `Cell ${i + 1} (pair P${pair})`, mesh: cell(), pos: [0, y0 + i * pitch - 0, 0], explode: [0, (i - N / 2) * 7, 0] });
+    parts[parts.length - 1].pos[1] = y0 + i * pitch;
+    parts[parts.length - 2].pos[1] = y0 + i * pitch - CELL.t / 2 - PAD / 2;
   }
-  // Series jumpers: + stub of group k to − stub of group k+1 (same side), vertical Ni-Cu bar
-  for (let k = 0; k < 5; k++) {
-    const side = k % 2 ? -1 : 1;
-    const ya = y0 + k * PITCH + 3, yb = y0 + (k + 1) * PITCH + 0.7;
-    parts.push({
-      name: `Series jumper ${k + 1}–${k + 2} (Ni-Cu)`,
-      mesh: box({ x: 3, y: yb - ya + 2, z: 8, material: nicu() }),
-      pos: [side * 66, (ya + yb) / 2, zTab + 22 - (k % 2 ? 0 : 0)],
-      explode: [side * 30, (k - 2) * 16, 30],
-    });
-  }
-  const top = y0 + 5 * PITCH + CELL.t / 2 + FOAM;
-  parts.push({ name: "Top EVA pad", mesh: box({ x: 2 * CELL.w + GAP, y: FOAM, z: CELL.l, material: foamMat() }), pos: [0, top + FOAM / 2, 0], explode: [0, 50, 0] });
-  parts.push({ name: "Top Al plate (3 mm 6061)", mesh: plateWithHoles(W, D), pos: [0, top + FOAM + 1.5, 0], explode: [0, 70, 0] });
+  parts.push({ name: "Top compression pad", mesh: box({ x: CELL.x - 2, y: PAD, z: CELL.z - 2, r: 0.3, material: pad() }), pos: [0, SHEET + stackH - PAD / 2, 0], explode: [0, 46, 0] });
+  parts.push({ name: "Top carbon fiber sheet", mesh: box({ x: CELL.x + 6, y: SHEET, z: CELL.z + 6, r: 0.6, material: cf() }), pos: [0, H - SHEET / 2, 0], explode: [0, 60, 0] });
 
-  const cx = W / 2 - 6, cz = D / 2 - 6, plateTop = top + FOAM + 3;
-  [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sz], i) => {
-    parts.push({
-      name: `M3 SHCS + G10 stop ${i + 1}`,
-      mesh: group([
-        { mesh: cyl({ r: 1.5, h: plateTop + 6, material: MAT.steel() }), pos: [0, (plateTop + 6) / 2 - 3, 0] },
-        { mesh: cyl({ r: 2.8, h: 3, material: MAT.steel() }), pos: [0, -1.5, 0] },
-        { mesh: cyl({ r: 3, h: 2.4, seg: 6, material: MAT.steel() }), pos: [0, plateTop + 1.2, 0] },
-        { mesh: box({ x: 12, y: plateTop - 6, z: 12, material: MAT.pla(0xb8c48a) }), pos: [0, plateTop / 2, 0] },
-      ]),
-      pos: [sx * cx, 0, sz * cz],
-      explode: [sx * 25, 90, sz * 25],
-    });
-  });
+  const slotY = Array.from({ length: N }, (_, i) => y0 + i * pitch - H / 2);
+  parts.push({ name: "End clamp (tab side, slotted)", mesh: clamp(H + 8, slotY, 1), pos: [CELL.x / 2 + 3 + 3, H / 2, 0], explode: [70, 0, 0] });
+  parts.push({ name: "End clamp (closed side)", mesh: clamp(H + 8, null, -1), pos: [-CELL.x / 2 - 3 - 3, H / 2, 0], explode: [-70, 0, 0] });
 
-  parts.push({
-    name: "BMS (6S, active balancing)",
-    mesh: group([
-      { mesh: box({ x: 70, y: 2, z: 45, material: MAT.pla(0x1f6b3a) }) },
-      { mesh: box({ x: 22, y: 6, z: 14, material: MAT.carbon() }), pos: [-18, 4, 8] },
-      { mesh: box({ x: 14, y: 4, z: 10, material: MAT.carbon() }), pos: [16, 3, -10] },
-    ]),
-    pos: [-20, plateTop + 3, -8], explode: [0, 110, 0],
-  });
-  parts.push({
-    name: "XT60 + main leads",
-    mesh: group([
-      { mesh: sweep([[0, 0, 0], [8, 6, 20], [10, 8, 40]], 2.2, MAT.pla(0xb3261e)) },
-      { mesh: sweep([[6, 0, 0], [14, 6, 20], [18, 8, 40]], 2.2, MAT.carbon()) },
-      { mesh: box({ x: 16, y: 8, z: 16, material: MAT.pla(0xe6c229) }), pos: [14, 8, 48] },
-    ]),
-    pos: [30, plateTop + 3, D / 2 - 6], explode: [0, 110, 30],
-  });
-  parts.push({
-    name: "JST-XH 7-pin balance lead",
-    mesh: group([
-      { mesh: sweep([[0, 0, 0], [-6, 4, 18], [-4, 6, 34]], 1.2, MAT.pla(0xf2f2f2)) },
-      { mesh: box({ x: 18, y: 6, z: 6, material: MAT.pla(0xf2f2f2) }), pos: [-4, 6, 38] },
-    ]),
-    pos: [-40, plateTop + 3, D / 2 - 6], explode: [0, 110, 30],
-  });
+  const wrap = new THREE.MeshStandardMaterial({ color: 0xbfd0e0, transparent: true, opacity: 0.1, roughness: 0.15, metalness: 0, depthWrite: false });
+  parts.push({ name: "Shrink wrap", mesh: box({ x: CELL.x + 34, y: H + 12, z: CELL.z + 14, r: 3, material: wrap }), pos: [0, H / 2, 0], explode: [0, 0, 110] });
 
   return {
     group: assembly(parts),
-    notes: "Shows the 6S2P architecture. Cell dimensions approximate.",
+    notes: "Rebuilt from her retention-concept CAD so it can be rotated and exploded.",
   };
-}
-
-function plateWithHoles(W, D) {
-  const s = new THREE.Shape();
-  s.moveTo(-W / 2, -D / 2); s.lineTo(W / 2, -D / 2); s.lineTo(W / 2, D / 2); s.lineTo(-W / 2, D / 2);
-  for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
-    const p = new THREE.Path(); p.absarc(sx * (W / 2 - 6), sz * (D / 2 - 6), 1.6, 0, Math.PI * 2, true); s.holes.push(p);
-  }
-  const g = new THREE.ExtrudeGeometry(s, { depth: 3, bevelEnabled: false, curveSegments: 24 });
-  g.rotateX(Math.PI / 2); g.translate(0, 1.5, 0);
-  return new THREE.Mesh(g, MAT.aluminum());
 }

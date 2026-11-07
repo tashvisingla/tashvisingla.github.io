@@ -3,6 +3,7 @@
 //      v.setExplode(0..1); v.reset(); v.setAutoRotate(bool); v.dispose();
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { loadModel } from "../models/index.js";
 
 export function createViewer(container) {
@@ -20,12 +21,15 @@ export function createViewer(container) {
   controls.autoRotateSpeed = 1.2;
   controls.addEventListener("start", () => (controls.autoRotate = false));
 
-  scene.add(new THREE.HemisphereLight(0xfff8ee, 0x8a93a6, 1.4));
-  const key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(3, 5, 4); scene.add(key);
-  const rim = new THREE.DirectionalLight(0xbcd0ff, 0.9); rim.position.set(-4, 2, -3); scene.add(rim);
+  // Studio lighting: neutral environment reflections (what makes metals read as metal) + soft key light
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  renderer.toneMappingExposure = 1.0;
+  scene.add(new THREE.HemisphereLight(0xffffff, 0xb8bec8, 0.6));
+  const key = new THREE.DirectionalLight(0xffffff, 1.4); key.position.set(3, 5, 4); scene.add(key);
 
-  let grid = null, root = null, mode = "shaded", explode = 0, home = null, current = null, lastOut = null;
-  const edgeMat = new THREE.LineBasicMaterial({ color: 0x1b2433, transparent: true, opacity: 0.55 });
+  let grid = null, root = null, mode = "edges", explode = 0, home = null, current = null, lastOut = null;
+  const edgeMat = new THREE.LineBasicMaterial({ color: 0x14171c, transparent: true, opacity: 0.7 });
 
   function resize() {
     const { clientWidth: w, clientHeight: h } = container;
@@ -47,7 +51,7 @@ export function createViewer(container) {
   function addEdges(obj) {
     obj.traverse((o) => {
       if (o.isMesh && !o.userData.edges) {
-        const e = new THREE.LineSegments(new THREE.EdgesGeometry(o.geometry, 25), edgeMat);
+        const e = new THREE.LineSegments(new THREE.EdgesGeometry(o.geometry, 30), edgeMat);
         e.raycast = () => {};
         o.add(e); o.userData.edges = e;
         o.userData.baseMat = o.material;
@@ -74,8 +78,8 @@ export function createViewer(container) {
 
     const step = Math.pow(10, Math.floor(Math.log10(r / 2)));
     const span = Math.ceil((r * 4) / step) * step;
-    grid = new THREE.GridHelper(span, span / step, 0x2346a0, 0x9aa7c4);
-    grid.material.transparent = true; grid.material.opacity = 0.35;
+    grid = new THREE.GridHelper(span, span / step, 0x9aa3b0, 0xc9ced6);
+    grid.material.transparent = true; grid.material.opacity = 0.5;
     scene.add(grid);
   }
 

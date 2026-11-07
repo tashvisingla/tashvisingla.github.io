@@ -81,45 +81,57 @@
     <span class="mono">DWG. NO. TS-001 · REV A</span>
   </footer>
 
-  <!-- Project detail: one shared 3D viewer, opened via #project-<id> -->
-  <div class="detail" id="detail" hidden>
-    <div class="detail__scrim" data-close></div>
-    <article class="detail__panel" role="dialog" aria-modal="true" aria-labelledby="d-title">
-      <button class="detail__close" data-close aria-label="Close">✕</button>
-      <div class="viewer">
-        <div class="viewer__canvas" id="viewer-canvas"></div>
-        <div class="viewer__status" id="viewer-status">Loading model…</div>
-        <div class="viewer__bar">
-          <div class="seg" id="mode-seg">
-            <button data-mode="shaded" class="on">Shaded</button>
-            <button data-mode="edges">Edges</button>
-            <button data-mode="xray">X-ray</button>
-          </div>
-          <label class="explode" id="explode-wrap">Explode
-            <input type="range" id="explode" min="0" max="1" step="0.01" value="0" />
-          </label>
-          <button id="rotate-btn" title="Auto-rotate">⟳</button>
-          <button id="reset-btn" title="Reset view">⌂</button>
-        </div>
-        <span class="viewer__hint mono">drag · scroll · right-drag to pan</span>
-      </div>
-      <div class="detail__body">
+  <!-- Project page: one shared 3D viewer, opened via #project-<id> -->
+  <div class="page" id="detail" hidden>
+    <div class="page__bar">
+      <a href="#projects" data-close class="page__back">← All projects</a>
+      <span class="mono page__count" id="d-count"></span>
+      <span class="page__pn"><a id="d-prev" href="#">← Prev</a><a id="d-next" href="#">Next →</a></span>
+    </div>
+    <article class="page__body">
+      <header class="page__head">
         <p class="eyebrow" id="d-kind"></p>
-        <h3 id="d-title"></h3>
-        <p class="detail__sub" id="d-sub"></p>
-        <p id="d-summary"></p>
-        <div class="details" id="d-details"></div>
-        <table class="specs" id="d-specs"></table>
-        <div class="tags" id="d-tags"></div>
-        <p class="detail__note mono" id="d-note"></p>
-        <div class="parts" id="d-parts-wrap" hidden><p class="eyebrow">In this model · hover to highlight</p><ul id="d-parts"></ul></div>
-        <div class="detail__nav">
-          <a id="d-prev" href="#">← Prev</a>
-          <a id="d-next" href="#">Next →</a>
+        <h1 id="d-title"></h1>
+        <p class="page__sub" id="d-sub"></p>
+        <dl class="meta" id="d-meta"></dl>
+      </header>
+
+      <section class="page__hero">
+        <div class="viewer">
+          <div class="viewer__canvas" id="viewer-canvas"></div>
+          <div class="viewer__status" id="viewer-status">Loading model…</div>
+          <div class="viewer__views seg" id="view-seg" hidden></div>
+          <div class="viewer__bar">
+            <div class="seg" id="mode-seg">
+              <button data-mode="shaded">Shaded</button>
+              <button data-mode="edges" class="on">Edges</button>
+              <button data-mode="xray">X-ray</button>
+            </div>
+            <label class="explode" id="explode-wrap">Explode
+              <input type="range" id="explode" min="0" max="1" step="0.01" value="0" />
+            </label>
+            <button id="anim-btn" title="Play assembly animation">▶</button>
+            <button id="rotate-btn" title="Auto-rotate" class="on">⟳</button>
+            <button id="reset-btn" title="Reset view">⌂</button>
+          </div>
+          <span class="viewer__hint mono">drag · scroll · right-drag to pan</span>
         </div>
-      </div>
+        <aside class="page__side">
+          <p id="d-summary"></p>
+          <div class="tags" id="d-tags"></div>
+          <div class="parts" id="d-parts-wrap" hidden><p class="eyebrow">In this model · hover to highlight</p><ul id="d-parts"></ul></div>
+          <p class="detail__note mono" id="d-note"></p>
+        </aside>
+      </section>
+
+      <section class="tar" id="d-tar"></section>
+      <section id="d-media"></section>
+      <section id="d-process"></section>
+      <section id="d-specs-wrap"><h2 class="page__h">Specifications</h2><table class="specs" id="d-specs"></table></section>
     </article>
   </div>
+
+  <div class="lightbox" id="lightbox" hidden><img alt="" /><p></p></div>
 
   <script type="module" src="js/main.js"></script>
 </body>

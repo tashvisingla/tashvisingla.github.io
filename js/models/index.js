@@ -22,6 +22,8 @@ export const MODELS = {
   "fsae-nosecone": () => import("./fsae-nosecone.js"),
   "quadcopter": () => import("./quadcopter.js"),
   "frc-robot": () => import("./frc-robot.js"),
+  "camera-mount": () => import("./camera-mount.js"),
+  "camera-mount-fixed": () => import("./camera-mount-fixed.js"),
 };
 
 export function placeholder() {

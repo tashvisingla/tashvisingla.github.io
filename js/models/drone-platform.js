@@ -1,7 +1,8 @@
 // Extended-endurance quad: 450-class X frame, 10" props, top-mounted pack, flight controller + GPS,
 // 2-axis damped camera gimbal below the nose, skid landing gear.
 import { assembly, group, box, cyl, extrudeProfile, MAT } from "../cad/parts.js";
-import { armXY, arm, motorProp, cameraGimbal, skids } from "../cad/drone.js";
+import { armXY, arm, motorProp, skids } from "../cad/drone.js";
+import buildCameraMount from "./camera-mount.js";
 
 const R = 225; // half motor-to-motor diagonal (450 mm class)
 
@@ -36,8 +37,8 @@ export default function build() {
     ]),
     pos: [0, 32, -45], explode: [0, 130, -40],
   });
-  parts.push({ name: "Camera gimbal mount (2-axis, damped)", mesh: cameraGimbal(), pos: [0, -2, 55], explode: [0, -80, 60] });
+  parts.push({ name: "Camera mount (rails + damped 2-axis gimbal)", mesh: buildCameraMount().group, pos: [0, -2, 0], explode: [0, -60, 80] });
   parts.push({ name: "Landing skids", mesh: skids(190, 110), pos: [0, -2, 0], explode: [0, -110, 0] });
 
-  return { group: assembly(parts), notes: "Camera gimbal mounted under the nose for sensor payloads." };
+  return { group: assembly(parts), notes: "Switch to the Camera mount view to see the mount on its own." };
 }
