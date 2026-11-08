@@ -68,6 +68,6 @@ export default function build() {
 
   return {
     group: assembly(parts),
-    notes: "Rebuilt from her retention-concept CAD so it can be rotated and exploded.",
+    notes: "Rebuilt from my retention-concept CAD so it can be rotated and exploded.",
   };
 }

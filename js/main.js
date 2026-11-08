@@ -19,7 +19,8 @@ $("#titleblock").innerHTML = `
     <div><span>GPA</span>${esc(person.gpa)}</div>
     <div><span>Based</span>${person.locations.map(esc).join(" / ")}</div>
   </div>
-  <div class="tb__row tb__foot"><span>Projects</span><strong>${projects.length}</strong><span>Scale</span><strong>1:1</strong></div>`;
+  <div class="tb__row tb__foot"><span>Projects</span><strong>${projects.length}</strong>
+    <a class="tb__resume" href="${esc(person.resume)}" target="_blank" rel="noopener">Resume <b>PDF ↗</b></a></div>`;
 
 $("#about-text").textContent =
   "I'm a mechanical engineering student at Columbia with a minor in aerospace. Most of my time goes into building things that fly, move, or carry load: a gearbox for a liquid-oxygen hybrid rocket's feed valve, a tendon-driven hand exoskeleton for space suits, suspension and carbon fiber parts for Formula SAE, and quadcopters. This past summer at Zeta Energy I designed a lithium-sulfur battery pack that doubled energy density at the same weight.";
@@ -50,7 +51,7 @@ $("#skills-list").innerHTML =
      <div class="tags">${coursework.map((s) => `<span class="tag tag--ghost">${esc(s)}</span>`).join("")}</div></div>`;
 
 $("#contact-links").innerHTML = person.links.map((l) => `
-  <a class="contact__link" href="${esc(l.href)}"${l.href.startsWith("http") ? ' target="_blank" rel="noopener"' : ""}><span class="eyebrow">${esc(l.label)}</span>${esc(l.text)}</a>`).join("");
+  <a class="contact__link" href="${esc(l.href)}"${/^http|\.pdf$/.test(l.href) ? ' target="_blank" rel="noopener"' : ""}><span class="eyebrow">${esc(l.label)}</span>${esc(l.text)}</a>`).join("");
 
 /* ---------- Projects grid + filters ---------- */
 const kinds = ["All", ...new Set(projects.map((p) => p.kind))];
@@ -91,7 +92,17 @@ async function getViewer() {
 const list = (items) => `<ul class="dots">${items.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>`;
 const fig = (im) => `<figure><img src="${esc(im.src)}" alt="${esc(im.caption || "")}" loading="lazy" data-zoom />${im.caption ? `<figcaption>${esc(im.caption)}</figcaption>` : ""}</figure>`;
 
+function withApogee(p) {
+  const a = p.apogee; if (!a || (!a.predicted && !a.actual)) return p;
+  const res = [...(p.results || [])], specs = [...p.specs];
+  if (a.predicted) specs.push(["Predicted apogee (OpenRocket)", a.predicted]);
+  if (a.actual) specs.push(["Actual apogee", a.actual]);
+  if (a.predicted && a.actual) res.unshift(`Apogee: ${a.actual} actual vs. ${a.predicted} predicted.`);
+  return { ...p, results: res, specs };
+}
+
 function renderPage(p) {
+  p = withApogee(p);
   const i = projects.indexOf(p);
   $("#d-count").textContent = `${String(i + 1).padStart(2, "0")} / ${String(projects.length).padStart(2, "0")}`;
   $("#d-kind").textContent = p.kind;
@@ -116,9 +127,26 @@ function renderPage(p) {
   $("#d-specs").innerHTML = p.specs.map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join("");
   $("#d-prev").href = `#project-${projects[(i - 1 + projects.length) % projects.length].id}`;
   $("#d-next").href = `#project-${projects[(i + 1) % projects.length].id}`;
-  const views = p.views || [];
+  const views = viewsOf(p);
   $("#view-seg").hidden = views.length < 2;
-  $("#view-seg").innerHTML = views.map((v, k) => `<button data-model="${esc(v.model)}" class="${k ? "" : "on"}">${esc(v.label)}</button>`).join("");
+  $("#view-seg").innerHTML = views.map((v, k) => `<button data-k="${k}" class="${k ? "" : "on"}">${esc(v.label)}</button>`).join("");
+}
+
+const viewsOf = (p) => p.views || (p.model ? [{ label: "3D model", model: p.model }] : p.drawing ? [{ label: "Drawing", drawing: p.drawing }] : []);
+let curViews = [];
+function showView(v) {
+  const box = $(".viewer");
+  stopAnim();
+  if (v?.drawing) {
+    box.classList.add("is-drawing"); ++loadToken;
+    $("#drawing img").src = v.drawing;
+    $("#d-parts-wrap").hidden = true;
+    $("#d-note").textContent = "◇ Concept illustration. Project CAD coming soon.";
+    viewer?.setAutoRotate(false);
+  } else if (v?.model) {
+    box.classList.remove("is-drawing");
+    showModel(v.model);
+  }
 }
 
 async function showModel(key) {
@@ -155,7 +183,8 @@ function openProject(id) {
   detail.scrollTop = 0;
   stopAnim();
   renderPage(p);
-  showModel(p.model);
+  curViews = viewsOf(p);
+  showView(curViews[0]);
 }
 
 function closeDetail() {
@@ -193,7 +222,7 @@ $("#anim-btn").addEventListener("click", () => (anim ? stopAnim() : playAnim()))
 $("#view-seg").addEventListener("click", (e) => {
   const b = e.target.closest("button"); if (!b) return;
   document.querySelectorAll("#view-seg button").forEach((x) => x.classList.toggle("on", x === b));
-  stopAnim(); showModel(b.dataset.model);
+  showView(curViews[+b.dataset.k]);
 });
 $("#mode-seg").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) setMode(b.dataset.mode); });
 $("#d-parts").addEventListener("mouseover", (e) => { const li = e.target.closest("li"); if (li) viewer?.highlight(li.dataset.part); });
